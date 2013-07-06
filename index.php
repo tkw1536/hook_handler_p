@@ -6,11 +6,10 @@
 	
 	This program is free software. It comes without any warranty, to
 	the extent permitted by applicable law. You can redistribute it
-	and/or modify it under the terms of the Do What The Fuck You Want
+	and/or modify it under thfste terms of the Do What The Fuck You Want
 	To Public License, Version 2, as published by Sam Hocevar. See
 	http://sam.zoy.org/wtfpl/COPYING for more details. 
 */
-	
 
 	//startswith, ends with, adapted from: http://stackoverflow.com/questions/834303/php-startswith-and-endswith-functions
 	function startsWith($haystack, $needle)
@@ -160,7 +159,7 @@
 			if(count($hook) > 2){
 				$will_stop = ($hook[2] == "!");  
 
-				if(strpos($hook[2], "?") !== false){
+				if(strpos($hook[2], ":") !== false){
 					$will_check_index = !$will_check_index; 
 				}
 
@@ -208,9 +207,13 @@
 		return $hook[7];
 	}
 
+
 	$protocol = (!empty($_SERVER['HTTPS']) && ('on' == $_SERVER['HTTPS']))? "https" : "http"; 
 
-	$conf_protocol = get_directives("protocol")[0][0]; 
+
+	$conf_protocol = get_directives("protocol"); 
+	$conf_protocol = $conf_protocol[0][0];
+
 
 	if($conf_protocol != "auto"){
 		$protocol = $conf_protocol;
@@ -218,13 +221,16 @@
 
 	$domain = $_SERVER['HTTP_HOST']; 
 
-	$conf_domain = get_directives("domain")[0][0]; 
+
+	$conf_domain = get_directives("domain"); 
+	$conf_domain = $conf_domain[0][0];
+
 
 	if($conf_domain != "auto"){
 		$domain = $conf_domain;
 	}
 
-	$host = $protocol."://".$domain; 
+	$host = $protocol."://" .$domain;
 
 	function make_hook_url($url, $external = false){
 		$root = $url; 
@@ -375,6 +381,8 @@
 
 	function get_redirect_dest($url){
 		$config =  get_config();
+		$self = get_directives("self"); 
+		$self = $self[0][0];
 
 		return hooks_match($url, 
 			get_hooks($config["check_index_rules"], $config["check_real_rules"]), 
@@ -385,7 +393,7 @@
 			$config["check_index_start"], 
 			$config["check_index_end"],
 			$config["check_real_start"],
-			get_directives("self")[0][0]
+			$self
 			);
 	}
 
