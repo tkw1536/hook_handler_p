@@ -10,6 +10,76 @@
 	To Public License, Version 2, as published by Sam Hocevar. See
 	http://sam.zoy.org/wtfpl/COPYING for more details. 
 */
+	if(false){/* Begin Config */
+?>
+; Script Configuration
+; Syntax is @DIRECTIVE ARUMENTS
+; Anything with ";" is a comment
+; so are empty lines. 
+; To check which config is available, please check the README
+
+; To set a hook use
+
+; @rewrite URL REWRITE MODIFIERS
+
+; You can use * as wildcats
+; in the replacement they will be used in the same order. (Chanign order coming soon)#
+
+; Example
+
+; @rewrite /about /about/
+; @rewrite /about/* /about.html
+; @rewrite /* /content/* @
+
+; Redirects the directory about to about.html on root. 
+
+; You can also use Regular expressions
+; @rewrite_regexp REGEXP REPLACEMENT MODIFIERS
+
+; Modifiers can be any combination of ! @ and ? and : and -
+; a ! means to stop every further replace. 
+; a @ means not to match the destination. Not supported for regexp. 
+; a : means not to check for index files
+; a ? means not to check for real files
+; a - marks the destination as external
+
+; You can also set index files: 
+; @index FILENAME
+
+; Basic Configuration
+
+@config max_depth 20 ; The maximum depth
+@config allow_multiple false ; Allow using a rule several times
+@config add_trailing_slash true ; Add a trailing slash if it is missing
+
+; When to check indexes
+@config check_index_start true ; check for indexes at the start
+@config check_index_end true ; check at the end
+@config check_index_rules false ; Do not check with rules. 
+
+; When to check for real files
+@config check_real_start true ; Do not check at the start
+@config check_real_rules true ; Do not check with rules. 
+
+; Settings for domain and protocol
+@domain auto ; or a specific domain without protocol
+@protocol auto ; or "http" or "https"
+
+; Set index files
+@index index.php
+@index index.html
+
+@self / ; Handle self as root
+@empty data/404.html; Handle empty things
+
+@rewrite /* /content/* @ ; Redirect everything outside of content to content
+
+@fix /content/*
+
+
+@end_config ; End Config
+<?php
+	}
 
 	//startswith, ends with, adapted from: http://stackoverflow.com/questions/834303/php-startswith-and-endswith-functions
 	function startsWith($haystack, $needle)
@@ -68,6 +138,9 @@
 			} else {
 				$use = startsWith($line, "?>"); 
 			}
+			if(startsWith($line, "@end_config")){
+				break;
+			}
 		}
 		fclose($file_handle);
 		return $directives; 
@@ -117,6 +190,31 @@
 		}
 
 		return $res; 
+	}
+
+	function get_fixes(){
+		$fixes = get_directives("fix");
+		foreach($fixes as &$fix){
+			$fix = $fix[0];
+			$fix = make_regexp_matcher($fix); 
+		}
+		$ignores = get_directives("ignore");
+		foreach($ignores as &$ignore){
+			$ignore = $ignore[0]; 
+		}
+
+		return array_merge($fixes, $ignores); 
+	}
+
+	function is_fixed($url){
+		$fixes = get_fixes(); 
+		foreach ($fixes as $fix){
+			if(preg_match($fix, $url)){
+				return true; 
+			}
+		}
+
+		return false; 
 	}
 
 
@@ -274,6 +372,10 @@
 
 	function get_real_file( $path){
 		$root = $_SERVER["DOCUMENT_ROOT"] . $path; 
+
+		if(endsWith($root, "/")){
+			$root = substr($root, 0, strlen($root) - 1);
+		}
 		
 		if(is_file($root)){
 			if(realpath($root) == realpath(__FILE__)){
@@ -313,6 +415,11 @@
 				if(!endsWith($path, "/")){
 					$path = $path . "/"; 
 				}
+			}
+
+
+			if(is_fixed($path)){
+				return make_hook_url($path); 
 			}
 
 			$hook = get_first_hook_id($path, $hooks); 
@@ -400,6 +507,9 @@
 	function redirectto($url){
 		if(get_current_url() != $url){
 			header( 'Location: ' . $url ) ;
+		} else {
+			$empty_include = get_directives("empty");
+			include $empty_include[0][0]; 
 		}
 	}
 
@@ -408,70 +518,4 @@
 	}
 
 	apply_redirects(); 
-
-	if(false){
 ?>
-
-; Script Configuration
-; Syntax is @DIRECTIVE ARUMENTS
-; Anything with ";" is a comment
-; so are empty lines. 
-; To check which config is available, please check the README
-
-; To set a hook use
-
-; @rewrite URL REWRITE MODIFIERS
-
-; You can use * as wildcats
-; in the replacement they will be used in the same order. (Chanign order coming soon)#
-
-; Example
-
-; @rewrite /about /about/
-; @rewrite /about/* /about.html
-; @rewrite /* /content/* @
-
-; Redirects the directory about to about.html on root. 
-
-; You can also use Regular expressions
-; @rewrite_regexp REGEXP REPLACEMENT MODIFIERS
-
-; Modifiers can be any combination of ! @ and ? and : and -
-; a ! means to stop every further replace. 
-; a @ means not to match the destination. Not supported for regexp. 
-; a : means not to check for index files
-; a ? means not to check for real files
-; a - marks the destination as external
-
-; You can also set index files: 
-; @index FILENAME
-
-; Basic Configuration
-
-@config max_depth 20 ; The maximum depth
-@config allow_multiple false ; Allow using a rule several times
-@config add_trailing_slash true ; Add a trailing slash if it is missing
-
-; When to check indexes
-@config check_index_start true ; check for indexes at the start
-@config check_index_end true ; check at the end
-@config check_index_rules false ; Do not check with rules. 
-
-; When to check for real files
-@config check_real_start true ; Do not check at the start
-@config check_real_rules true ; Do not check with rules. 
-
-; Settings for domain and protocol
-@domain auto ; or a specific domain without protocol
-@protocol auto ; or "http" or "https"
-
-; Set index files
-@index index.php
-@index index.html
-
-@self / ; Handle self as root
-
-@rewrite /* /content/* @ ; Redirect everything outside of content to content
-
-; Do not change the line below
-; <?php } ?>
