@@ -124,11 +124,23 @@
 	    return $path;
 	}
 
-
 	function get_directives($directive){
+		if($directive != "include"){
+			$basic = get_directives_from($directive, __FILE__); 
+			foreach get_directives("include") as $filename {
+				$filename = $filename[0];
+				$basic = array_merge($basic, get_directives_from($directive, $filename, true)); 
+			}
+			return $basic; 
+		} else {
+			return get_directives_from("include", __FILE__);
+		}
+	}
+
+
+	function get_directives_from($directive, $filename, $use = false){
 		$directives = array();
-		$use = false; 
-		$file_handle = fopen(__FILE__, "r");
+		$file_handle = fopen($filename, "r");
 		while (!feof($file_handle)) {
 			$line = fgets($file_handle);
 			if($use){

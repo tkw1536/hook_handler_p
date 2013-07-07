@@ -20,6 +20,7 @@ Anything which starts with ; is regarded a comment.
 Empty lines are ignored. 
 Available directives are: 
 
+* `@include FILENAME Also read the configuration file FILENAME. Only supported in the main file. `
 * `@self URL` Whenever we are redirected to this file, we handle it as if we were redirected to URL
 * `@fix PATTERN` Keeps everything like patterm fixed. Only applied intiially. 
 * `@ignore REGEXP` Same as fix, but for regexp. 
@@ -30,7 +31,7 @@ Available directives are:
 * `@rewrite PATTERN REPLACEMENT MOD` - Rewrite PATTERN to REPLACEMENT. You can use * as replacement characters in both pattern and replacement. 
 * `@rewrite_regexp REGEXP REPLACEMENT MOD` - Rewrite anything matching REGEXP to REPLACEMENT. 
 * `@empty FILENAME` Include FILENAME when redirecting to itself. 
-* `@end_config` Ends the config file. Ignroes everything after the line it is used on. 
+* `@end_config` Ends the config file. Ignores everything after the line it is used on. 
 
 For more documentation see index.php
 
