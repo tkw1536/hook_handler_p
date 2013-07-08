@@ -51,6 +51,7 @@
 @config max_depth 20 ; The maximum depth
 @config allow_multiple false ; Allow using a rule several times
 @config add_trailing_slash true ; Add a trailing slash if it is missing
+@config use_index_include_hack true ; Include index files directly?
 
 ; When to check indexes
 @config check_index_start true ; check for indexes at the start
@@ -70,11 +71,7 @@
 @index index.html
 
 @self / ; Handle self as root
-@empty data/404.html; Handle empty things
-
-@rewrite /* /content/* @ ; Redirect everything outside of content to content
-
-@fix /content/*
+@empty ignore ; 
 
 
 @end_config ; End Config
@@ -127,7 +124,7 @@
 	function get_directives($directive){
 		if($directive != "include"){
 			$basic = get_directives_from($directive, __FILE__); 
-			foreach get_directives("include") as $filename {
+			foreach (get_directives("include") as $filename) {
 				$filename = $filename[0];
 				$basic = array_merge($basic, get_directives_from($directive, $filename, true)); 
 			}
@@ -229,9 +226,9 @@
 		return false; 
 	}
 
-
-	function get_hooks($check_indexes, $check_reals){
-		$normal_hooks = get_directives("rewrite");
+	function get_hooks($check_indexes, $check_reals, $once = false){
+		$once = $once ? "_once" : ""; 
+		$normal_hooks = get_directives("rewrite" . $once);
 		foreach($normal_hooks as &$hook){
 			$will_stop = false; 
 			$will_not_match_dest = false; 
@@ -260,7 +257,7 @@
 					$will_stop, $will_not_match_dest, make_regexp_matcher($hook[1]), 
 					$will_check_index, $will_check_real, $external);
 		}
-		$regexp_hooks = get_directives("rewrite_regexp");
+		$regexp_hooks = get_directives("rewrite_regexp"  . $once);
 		foreach($regexp_hooks as &$hook){
 			$will_stop = false; 
 			$will_check_index = $check_indexes;
@@ -367,15 +364,22 @@
 		return -1;
 	}
 
-	function get_index_file($indexes, $path){
+	function get_index_file($indexes, $path, $use_include_hack = false){
 		$root = $_SERVER["DOCUMENT_ROOT"] . $path; 
 		foreach ($indexes as $index){
 			$pth = $root . $index[0];
 			if(is_file($pth)){
-				if(realpath($pth) == realpath(__FILE__)){ //I'm not an index file (I'm invisible)
+				if(realpath($pth) == realpath(__FILE__)){
+					//i cant be seen as an index file
 					return false; 
 				}
-				return truepath( $path . "/" . $index[0] );
+
+				if($use_include_hack && $GLOBALS["config"]["use_index_include_hack"]){
+					include $pth; 
+					exit(); 
+				} else {
+					return $path; 
+				}
 			}
 		}
 
@@ -386,6 +390,7 @@
 		$root = $_SERVER["DOCUMENT_ROOT"] . $path; 
 
 		if(endsWith($root, "/")){
+			$path = substr($path, 0, strlen($path) - 1);
 			$root = substr($root, 0, strlen($root) - 1);
 		}
 		
@@ -398,7 +403,7 @@
 		return false; 
 	}
 
-	function hooks_match($url, $hooks, $indexes, $allow_multiple, $max_count, $add_trailing_slash, $index_init, $index_finish, $real_start, $self_handler){
+	function hooks_match($url, $hooks, $once_hooks, $indexes, $allow_multiple, $max_count, $add_trailing_slash, $index_init, $index_finish, $real_start, $self_handler){
 		$i = 0;
 		$path = $url; 
 		$applied_hooks = array(); 
@@ -409,19 +414,20 @@
 				if($index === NULL){
 					$path = $self_handler; 
 				} else {
-					return $index;
+					return make_hook_url($index);
 				}
 			}
 		}
 
 		if($index_init){
-			$index = get_index_file($indexes, $path); 
+			$index = get_index_file($indexes, $path, true); 
 			if($index !== false){
-				return $index; 
+				return make_hook_url($index); 
 			}
 		}
 
 		while($i < $max_count){
+			$once = false; 
 
 			if($add_trailing_slash){
 				if(!endsWith($path, "/")){
@@ -435,19 +441,26 @@
 			}
 
 			$hook = get_first_hook_id($path, $hooks); 
-
+			if($hook == -1 and $i == 0){
+				$hook = get_first_hook_id($path, $once_hooks);
+				$once = true; 
+			}
 			if($hook == -1 or (!$allow_multiple and in_array($hook, $applied_hooks))){
 				break; 
+			} else if(!$once){
+				array_push($applied_hooks, $hook);
 			}
 
-			array_push($applied_hooks, $hook);
-			$path = hook_replace($hooks[$hook], $path); 
+			$this_hook = $once ? $once_hooks[$hook] : $hooks[$hook]; 
 
-			if(is_hook_external($hooks[$hook])){
+			
+			$path = hook_replace($this_hook, $path); 
+
+			if(is_hook_external($this_hook)){
 				return make_hook_url($path, true);
 			}
 
-			if(hook_check_real($hooks[$hook])){
+			if(hook_check_real($this_hook)){
 				$index = get_real_file($path); 
 				if($index !== false){
 					if($index === NULL){
@@ -458,8 +471,8 @@
 				}
 			}
 
-			if(hook_check_index($hooks[$hook])){
-				$index = get_index_file($indexes, $path); 
+			if(hook_check_index($this_hook)){
+				$index = get_index_file($indexes, $path, !$index_init); 
 				if($index !== false){
 					return make_hook_url($index); 
 				}
@@ -467,7 +480,7 @@
 
 			
 
-			if(hook_stops($hooks[$hook])){
+			if(hook_stops($this_hook)){
 				break; 
 			}
 
@@ -475,7 +488,7 @@
 		}
 
 		if($index_finish){
-			$index = get_index_file($indexes, $path); 
+			$index = get_index_file($indexes, $path, !$index_init); 
 			if($index !== false){
 				return make_hook_url($index); 
 			}
@@ -499,12 +512,14 @@
 	}
 
 	function get_redirect_dest($url){
-		$config =  get_config();
 		$self = get_directives("self"); 
 		$self = $self[0][0];
 
+		$config = $GLOBALS["config"]; 
+
 		return hooks_match($url, 
 			get_hooks($config["check_index_rules"], $config["check_real_rules"]), 
+			get_hooks($config["check_index_rules"], $config["check_real_rules"], true),
 			get_directives("index"), 
 			$config["allow_multiple"], 
 			$config["max_depth"], 
@@ -521,13 +536,15 @@
 			header( 'Location: ' . $url ) ;
 		} else {
 			$empty_include = get_directives("empty");
-			include $empty_include[0][0]; 
+			@include @$empty_include[0][0]; 
 		}
 	}
 
 	function apply_redirects(){
 		redirectto(get_redirect_dest($_SERVER['REQUEST_URI']));
 	}
+
+	$config = get_config();
 
 	apply_redirects(); 
 ?>
