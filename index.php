@@ -78,7 +78,7 @@
 <?php
 	}
 
-	//startswith, ends with, adapted from: http://stackoverflow.com/questions/834303/php-startswith-and-endswith-functions
+//startswith, ends with, adapted from: http://stackoverflow.com/questions/834303/php-startswith-and-endswith-functions
 	function startsWith($haystack, $needle)
 	{
 		if($needle == ""){return true; }
@@ -365,6 +365,7 @@
 	}
 
 	function get_index_file($indexes, $path, $use_include_hack = false){
+		$path = preg_replace('/\?.*/', '', $path); //remove query string
 		$root = $_SERVER["DOCUMENT_ROOT"] . $path; 
 		foreach ($indexes as $index){
 			$pth = $root . $index[0];
@@ -387,6 +388,7 @@
 	}
 
 	function get_real_file( $path){
+		$path = preg_replace('/\?.*/', '', $path); //remove query string
 		$root = $_SERVER["DOCUMENT_ROOT"] . $path; 
 
 		if(endsWith($root, "/")){
