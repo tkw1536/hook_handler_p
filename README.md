@@ -31,15 +31,18 @@ Available directives are:
     * `@index FILENAME` Add Filename to the list of index files. 
     * `@empty FILENAME` Include FILENAME when redirecting to itself. 
 
+
 * Rewrite Rules (Simple Pattern): 
     * `@fix PATTERN` Keeps everything like patterm fixed. Only applied intiially. 
     * `@rewrite PATTERN REPLACEMENT MOD` - Rewrite PATTERN to REPLACEMENT. You can use * as replacement characters in both pattern and replacement. Also use modifiers in MOD. 
     * `@rewrite_once PATTERN REPLACEMENT MOD` - Rewrite PATTERN to REPLACEMENT if nothing else matches. You can use * as replacement characters in both pattern and replacement. Also use modifiers in MOD. 
+    * `@noindex FILENAME` Make FILENAME be ignored as an idnex file. 
+
 
 * Rewrite Rules (Regexp): 
     * `@rewrite_regexp REGEXP REPLACEMENT MOD` - Rewrite anything matching REGEXP to REPLACEMENT. Also use modifiers in MOD. 
     * `@rewrite_regexp_once REGEXP REPLACEMENT MOD` - Rewrite anything matching REGEXP to REPLACEMENT if nothing else matches. Also use modifiers in MOD. 
-
+    * `@ignoreindex REGEXP` Ignore everythign which matches REGEXP as an index file. 
     * `@ignore REGEXP` Same as fix, but for regexp. 
 
 The following  configuration is available: 

@@ -215,9 +215,35 @@
 		return array_merge($fixes, $ignores); 
 	}
 
+	function get_indexes(){
+		$fixes = get_directives("noindex");
+		foreach($fixes as &$fix){
+			$fix = $fix[0];
+			$fix = make_regexp_matcher($fix); 
+		}
+		$ignores = get_directives("ignoreindex");
+		foreach($ignores as &$ignore){
+			$ignore = $ignore[0]; 
+		}
+
+		return array_merge($fixes, $ignores); 
+	}
+
 	function is_fixed($url){
 		$fixes = get_fixes(); 
 		foreach ($fixes as $fix){
+			if(preg_match($fix, $url)){
+				return true; 
+			}
+		}
+
+		return false; 
+	}
+
+	function is_no_index($pattern){
+		$indexes = get_indexes(); 
+
+		foreach $indexes as $index){
 			if(preg_match($fix, $url)){
 				return true; 
 			}
@@ -372,6 +398,10 @@
 			if(is_file($pth)){
 				if(realpath($pth) == realpath(__FILE__)){
 					//i cant be seen as an index file
+					return false; 
+				}
+
+				if(is_no_index($path)){
 					return false; 
 				}
 
