@@ -4,7 +4,5 @@ ErrorDocument 404 /index.php
 ErrorDocument 401 /index.php
 ErrorDocument 403 /index.php
 
-# No indexes
-Options -Indexes
 #Set the script as root
 DirectoryIndex /index.php

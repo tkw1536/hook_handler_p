@@ -6,7 +6,7 @@ Hook Handler P is a small alternative to the htaccess mod_rewrite option where i
 
 ## Requirements
 * PHP 5.2 or higher
-* htaccess support for ErrorDocument, Options, DirectoryIndex
+* htaccess support for ErrorDocument, DirectoryIndex
 
 ## Install
 * copy .htaccess and index.php to your webserver root.
