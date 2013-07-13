@@ -20,7 +20,7 @@ Anything which starts with ; is regarded a comment.
 Empty lines are ignored. 
 Available directives are: 
 
-* `@include FILENAME Also read the configuration file FILENAME. Only supported in the main file. `
+* `@include FILENAME` Also read the configuration file FILENAME. Only supported in the main file. 
 * `@end_config` Ends the config file. Ignores everything after the line it is used on. 
 
 * General behaviour:
@@ -42,23 +42,25 @@ Available directives are:
 * Rewrite Rules (Regexp): 
     * `@rewrite_regexp REGEXP REPLACEMENT MOD` - Rewrite anything matching REGEXP to REPLACEMENT. Also use modifiers in MOD. 
     * `@rewrite_regexp_once REGEXP REPLACEMENT MOD` - Rewrite anything matching REGEXP to REPLACEMENT if nothing else matches. Also use modifiers in MOD. 
-    * `@ignoreindex REGEXP` Ignore everythign which matches REGEXP as an index file. 
+    * `@ignoreindex REGEXP` Ignore everything which matches REGEXP as an index file.
     * `@ignore REGEXP` Same as fix, but for regexp. 
 
 The following  configuration is available: 
-    * `max_depth` Maximum recusrion depth. Default: 20
-    * `allow_multiple` Allow using the same rule several times. Default: false
-    * `add_trailing_slash` Add a trailing slash if it applicable? Default: true. 
-    * `use_index_include_hack` Include index files instead of redirecting to them? Ignored if `check_index_start` is false. Default: true. 
-    * `check_index_start` Check for index files at the start? Default: true. 
-    * `check_index_end` Check for index files at the end? Default: true. 
-    * `check_index_rules` Check for index files after applying a rule? Default: true. 
-    * `check_real_start` Check for reak files at the start? Default: true. 
-    * `check_index_rules` Check for real files after applying a rule? Default: true. 
+* `max_depth` Maximum recusrion depth. Default: 20
+* `allow_multiple` Allow using the same rule several times. Default: false
+* `add_trailing_slash` Add a trailing slash if it applicable? Default: true. 
+* `use_index_include_hack` Include index files instead of redirecting to them? Ignored if `check_index_start` is false. Default: true. 
+* `check_index_start` Check for index files at the start? Default: true. 
+* `check_index_end` Check for index files at the end? Default: true. 
+* `check_index_rules` Check for index files after applying a rule? Default: true. 
+* `check_real_start` Check for reak files at the start? Default: true. 
+* `check_index_rules` Check for real files after applying a rule? Default: true. 
 
-* `@self` might be ignored it tehre is a rule matching. 
+Also note that:
+
+* `@self` might be ignored it there is a rule matching. 
 * `@rewrite_once` might be ignored since the target page might redirect you again. 
-* index files, real files and external rewrites top the rewrite chain. 
+* index files, real files and external directives rewrite top the rewrite chain. 
 * Modifiers can be any combination of ! @ ? :  and -
     * a ! means to stop every further replace. 
     * a @ means not to match the destination. Not supported for regexp. 
